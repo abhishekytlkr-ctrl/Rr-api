@@ -1,41 +1,58 @@
-export default async function handler(req, res) {
-  try {
-    const rc = req.query.rc;
+import requests
+import uuid
+import json
 
-    if (!rc) {
-      return res.status(400).json({ error: "RC required" });
-    }
+def handler(request):
+    try:
+        # ✅ Query param safely get
+        rc = request.query.get("rc")
 
-    const response = await fetch("https://api1.91wheels.com/api/v1/third/rc-detail", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Origin": "https://www.91wheels.com",
-        "Referer": "https://www.91wheels.com/",
-        "User-Agent": "Mozilla/5.0"
-      },
-      body: JSON.stringify({
-        regNo: rc.toUpperCase(),
-        sessionid: Math.random().toString()
-      })
-    });
+        if not rc:
+            return {
+                "statusCode": 400,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({"error": "RC parameter required"})
+            }
 
-    const raw = await response.json();
-    const data = raw?.data?.data || {};
+        rc = rc.strip().upper()
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        owner: data.owner_name,
-        vehicle: data.maker_model,
-        fuel: data.fuel_type,
-        pucc_number: data.pucc_number,
-        insurance_policy: data.insurance_policy_number,
-        tax_upto: data.tax_upto
-      }
-    });
+        payload = {
+            "regNo": rc,
+            "sessionid": str(uuid.uuid4())
+        }
 
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
+        headers = {
+            "Content-Type": "application/json",
+            "Origin": "https://www.91wheels.com",
+            "Referer": "https://www.91wheels.com/",
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        response = requests.post(
+            "https://api1.91wheels.com/api/v1/third/rc-detail",
+            headers=headers,
+            json=payload,
+            timeout=15
+        )
+
+        data = response.json()
+
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({
+                "success": True,
+                "rc": rc,
+                "data": data
+            })
+        }
+
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+        }
