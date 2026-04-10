@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/rc.py": {
+      "runtime": "python3.9"
+    }
+  }
+}
